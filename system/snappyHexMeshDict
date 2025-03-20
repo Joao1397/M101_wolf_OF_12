@@ -1,0 +1,239 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#includeEtc "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
+
+castellatedMesh true; // or false
+snap            true; // or false
+addLayers       true; // or false
+
+geometry
+{
+    wolf // Name of the surface inside snappyHexMesh
+    {
+        type triSurfaceMesh;
+        file "wolfExtruded.stl";
+        regions // Use this option if you have a STL with multiple patches defined
+        {
+            wolflocal   // This is the name of the region or surface patch in the STL
+            {
+                  name wolf_wall; 	// User-defined patch name. This is the final name of the patch
+            } 
+        }
+    }
+
+    box // Name of geometrical entity
+    {
+        type searchableBox;
+        min (-100.0 -120.0 -50.0 );
+        max (100.0 120.0 150.0 );
+    }
+
+    sphere	// name
+    {
+        type searchableSphere;
+        centre (120.0 -100.0 50.0 );
+        radius 40.0;
+    }
+};
+
+castellatedMeshControls
+{
+    // Refinement Parameters
+    maxLocalCells 100000;
+    maxGlobalCells 2000000; // Maximum number of cells in the domain. If the mesher reach this number, it will not add more cells.
+    minRefinementCells 10;
+    maxLoadUnbalance 0.10;
+    nCellsBetweenLevels 3; // This parameter controls the transition between cell refinement levels.
+
+    // Explicit feature edge refinement
+    features
+    (
+        {
+            file "wolfExtruded.eMesh";
+            level 2;      
+        }
+    );
+
+    // Surface based refinement
+    refinementSurfaces
+    {
+        wolf // The surface wolf was defined in the geometry section.
+        {
+	        // global - Surface-wise min and max refinement level
+            level (1 1); // Global Refinement
+
+            // Optional region-wise level specification
+            regions // The region wolflocal was defined in the geometry section.
+            {
+                wolflocal 
+                {
+                    level (2 4); // Local refinement
+           		
+                    patchInfo
+            		{
+                		type wall; // You can only define patches of type wall or patch.
+            		} 
+                }
+            }
+
+        }
+
+        
+        sphere // Optional specification of what to do with faceZone faces:
+        {
+            level (1 1);
+
+            // faceZone face_inner; // Name of faceZone
+            // cellZone cell_inner; // Name of cellZone
+            mode inside;
+            // cellZoneInside inside;
+	        // faceType	internal;
+        }
+        
+    }
+    //End of refinement surfaces
+
+    // Feature angle:
+    resolveFeatureAngle 30; 
+    /* This parameter controls the local curvature refinement. 
+    The higher the value, the less features it captures. 
+    For example, if you use a value of 100 it will not add refinement in high curvature areas. 
+    It also controls edge feature snapping; high values will not resolve sharp angles in surface intersections.
+    Usually, a value of 30 is a good choice. If you want to resolve more feature, simply reduce this value.
+    */
+
+    // If not specified same as resolveFeatureAngle
+    planarAngle 30;
+
+    // Region-wise refinement
+    refinementRegions
+    {
+        box // This region or geometrical entity was created in the geometry section. You can use open or close geometries. You can use STL files. But you cannot use regions defined in the STL.
+        {
+            mode inside;
+            levels  (( 1 1 ));
+        }
+    }
+
+    /* This point defines where do you want the mesh. 
+    According to the point locations, the mesh can be internal or external.
+    If the point is inside the STL, it is an internal mesh.
+    f the point is inside the background mesh and outside the STL it is an external mesh.
+    Put this point in pure hexahedral regions. Do no put it in transition regions as it will give you problems.
+    */
+
+    insidePoint (-100.0 0.0 50.0 ); // The material point indicates where we want to create the mesh, that is, inside or outside the body to be meshed.
+
+    allowFreeStandingZoneFaces true;
+    
+    // nCellsBetweenLevels 3;
+}
+
+/*
+If after reaching the advised maximum values you are still getting meshing problems, it is
+advised to increase the surface mesh refinement or the background mesh resolution
+*/
+
+snapControls
+{
+    nSmoothPatch 3;	// Number of patch smoothing iterations before finding correspondence to surface
+    tolerance 2.0;
+    nSolveIter 10; // 50 // 100 max // Number of mesh displacement relaxation iterations.
+    /*
+    The higher the value the better the body fitted mesh. The recommended value is 30. If you are having problems with the mesh 
+    quality (related to the snapping step), try to increase this value to 100. Have in mind that this will increase the meshing time.
+    */
+
+    // Maximum number of snapping relaxation iterations. Should stop before upon reaching a correct mesh.
+    nRelaxIter 5; // 10 // 20 max // Increase this value to improve the quality of the body fitted mesh.
+
+    // Feature snapping
+    nFeatureSnapIter 10; // 20 // 100 max // Number of feature edge snapping iterations.
+    implicitFeatureSnap false; // Detect (geometric only) features by sampling the surface (default=false).
+    explicitFeatureSnap true; // // Use castellatedMeshControls::features (default = true)
+    multiRegionFeatureSnap false;
+}
+
+addLayersControls
+{
+    //Global parameters
+    relativeSizes true;
+    expansionRatio 1.2;
+    finalLayerThickness 0.5;
+    minThickness 0.1;
+    //  firstLayerThickness 0.01;
+    //  maxThicknessToMedialRatio 0.6;
+
+    /*
+    In this section we select the patches where we want to add the layers. We can add multiple patches (if they exist).
+    */
+    layers
+    {
+        wolf_wall // This patch was created in the geometry section.
+        {
+            nSurfaceLayers 3;
+            // Local parameters
+            /*
+            expansionRatio 1.3;
+            finalLayerThickness 0.3;
+            minThickness 0.1;
+            */
+        }
+    }
+
+    // Advanced settings
+    nGrow 0;
+    featureAngle 130; // 330 max // Specification of feature angle above which layers are collapsed automatically.
+    maxFaceThicknessRatio 0.5; // 1.0 max
+    nSmoothSurfaceNormals 1;
+    nSmoothThickness 10;
+    minMedialAxisAngle 90;
+    maxThicknessToMedialRatio 0.3;
+    nSmoothNormals 3;
+    slipFeatureAngle 30;
+    nRelaxIter 5;
+    nBufferCellsNoExtrude 0;
+    nLayerIter 50;
+    nRelaxedIter 20;
+}
+
+meshQualityControls
+{
+    #include "meshQualityDict"
+}
+
+/*
+debugFlags
+(
+    mesh            // write intermediate meshes
+    intersections   // write current mesh intersections as .obj files
+    featureSeeds    // write information about explicit feature edge
+                    // refinement
+    attraction      // write attraction as .obj files
+    layerInfo       // write information about layers
+);
+*/
+
+writeFlags
+(
+    scalarLevels    // write volScalarField with cellLevel for postprocessing
+    layerSets       // write cellSets, faceSets of faces in layer
+    layerFields     // write volScalarField for layer coverage
+);
+
+mergeTolerance 1e-6;
+
+// ************************************************************************* //
