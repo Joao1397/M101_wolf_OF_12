@@ -58,7 +58,7 @@ castellatedMeshControls
     (
         {
             file "wolfExtruded.eMesh";
-            level ((0 2));      
+            level 2;
         }
     );
 

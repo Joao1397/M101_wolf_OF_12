@@ -14,57 +14,43 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-8
+6
 (
     minX
     {
         type            patch;
         nFaces          400;
-        startFace       495039;
+        startFace       22800;
     }
     maxX
     {
         type            patch;
         nFaces          400;
-        startFace       495439;
+        startFace       23200;
     }
     minY
     {
         type            patch;
         nFaces          400;
-        startFace       495839;
+        startFace       23600;
     }
     maxY
     {
         type            patch;
         nFaces          400;
-        startFace       496239;
+        startFace       24000;
     }
     minZ
     {
         type            patch;
         nFaces          400;
-        startFace       496639;
+        startFace       24400;
     }
     maxZ
     {
         type            patch;
         nFaces          400;
-        startFace       497039;
-    }
-    wolf_wall
-    {
-        type            wall;
-        inGroups        List<word> 1(wall);
-        nFaces          20083;
-        startFace       497439;
-    }
-    sphere
-    {
-        type            wall;
-        inGroups        List<word> 1(wall);
-        nFaces          240;
-        startFace       517522;
+        startFace       24800;
     }
 )
 
