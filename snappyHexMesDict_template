@@ -47,10 +47,10 @@ geometry
 castellatedMeshControls
 {
     // Refinement Parameters
-    maxLocalCells 100000;
+    maxLocalCells 100000; // This parameter sets an upper limit on the number of cells that can be created on any single processor during the parallel meshing process.
     maxGlobalCells 2000000; // Maximum number of cells in the domain. If the mesher reach this number, it will not add more cells.
-    minRefinementCells 10;
-    maxLoadUnbalance 0.10;
+    minRefinementCells 10; // This parameter specifies the minimum number of cells that must be present within a region marked for refinement before the refinement operation is actually performed in that region.
+    maxLoadUnbalance 0.10; // This parameter controls the maximum allowed imbalance in the number of cells assigned to each processor during parallel meshing. It's expressed as a fraction of the average number of cells per processor.
     nCellsBetweenLevels 3; // This parameter controls the transition between cell refinement levels.
 
     // Explicit feature edge refinement
@@ -58,7 +58,10 @@ castellatedMeshControls
     (
         {
             file "wolfExtruded.eMesh";
-            level 2;      
+            level 2;     
+            // Read the geometric feature edges defined in the file wolfExtruded.eMesh.
+            // Identify the base mesh cells that are close to or intersected by these feature edges.
+            // Refine these cells locally by splitting them twice (level 2), resulting in a finer mesh resolution around the sharp corners and edges present in the wolfExtruded.eMesh geometry. 
         }
     );
 
@@ -85,19 +88,6 @@ castellatedMeshControls
             }
 
         }
-
-        
-        sphere // Optional specification of what to do with faceZone faces:
-        {
-            level (1 1);
-
-            // faceZone face_inner; // Name of faceZone
-            // cellZone cell_inner; // Name of cellZone
-            mode inside;
-            // cellZoneInside inside;
-	        // faceType	internal;
-        }
-        
     }
     //End of refinement surfaces
 
